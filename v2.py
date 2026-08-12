@@ -116,10 +116,12 @@ class Block(nn.Module):
         head_size = n_embd // n_head
         self.sa = MultiHeadAttention(n_head, head_size)
         self.ffwd = FeedFoward(n_embd)
+        self.ln1 = nn.LayerNorm(n_embd)
+        self.ln2 = nn.LayerNorm(n_embd)
 
     def forward(self, x):
-        x = x + self.sa(x);
-        x = x + self.ffwd(x);
+        x = x + self.sa(self.ln1(x));
+        x = x + self.ffwd(self.ln2(x));
         return x
 
 
@@ -135,6 +137,7 @@ class BigramLanguageModel(nn.Module):
             Block(n_embd, n_head=4),
             Block(n_embd, n_head=4),
             Block(n_embd, n_head=4),
+            nn.LayerNorm(n_embd)
         )
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
@@ -206,3 +209,4 @@ print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
 # multi-headed attention：step 4500: train loss 2.2811, val loss 2.2921
 # add feedforward: step 4500: train loss 2.2340, val loss 2.2461
 # add residual block step 4999: train loss 2.0055, val loss 2.1020
+# add layernorms step 4999: train loss 1.9887, val loss 2.0721
